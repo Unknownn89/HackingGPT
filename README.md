@@ -1,119 +1,135 @@
 # HackingGPT
 
-**HackingGPT** é uma ferramenta de terminal avançada para pentest e bug bounty que integra a API do ChatGPT para auxiliar pesquisadores de segurança na execução e análise de comandos – tudo diretamente pelo terminal.
+**HackingGPT** é uma ferramenta de Terminal avançada para pentest e bug bounty que integra as APIs do ChatGPT e DeepSeek para auxiliar pesquisadores de segurança na execução e análise de comandos – tudo diretamente pelo Terminal.
 
 ## Funcionalidades
 
 - **Assistência dinâmica:**  
-  Utiliza a API do ChatGPT para orientar suas operações de pentest, sugerindo comandos personalizados com base nas suas consultas.
+  Utiliza as APIs do ChatGPT (OpenAI) e DeepSeek para orientar suas operações de pentest, sugerindo comandos personalizados com base nas suas consultas.
 
 - **Execução interativa de comandos:**  
-  O código detecta comandos na resposta do ChatGPT (por meio de blocos de código ou linhas que iniciam com `$`) e permite que o usuário:
-  - Execute o comando;
+  O código detecta comandos nas respostas (em blocos de código ou linhas que iniciam com `$`) e permite que o usuário:
+  - Execute o comando em um Terminal interativo (usando `xterm`);
   - Edite o comando antes da execução;
-  - Ou o pule.
+  - Pule o comando, se preferir.
 
 - **Integração de resultados:**  
-  Os resultados dos comandos executados são agregados e enviados de volta ao ChatGPT para nova análise, permitindo um fluxo contínuo de orientação.
+  Os resultados dos comandos executados são agregados e enviados de volta à API para nova análise, permitindo um fluxo contínuo de orientação.
+
+- **Integração com múltiplas APIs:**  
+  Compatível com:
+  - OpenAI: modelos como `gpt-4o` e `gpt-4o-mini`;
+  - DeepSeek: modelos como `deepseek-chat` e `deepseek-reasoner`.
 
 - **Interface colorida:**  
-  Utiliza a biblioteca [Rich](https://github.com/willmcgugan/rich) para exibir mensagens formatadas e renderizar Markdown com cores no terminal.
+  Utiliza a biblioteca [Rich](https://github.com/willmcgugan/rich) para exibir mensagens formatadas e renderizar Markdown com cores no Terminal.
 
-- **Seleção de modelos:**  
-  Permite a escolha entre diferentes modelos, como **gpt-4o** e **gpt-4o-mini**.  
-  As opções referentes aos modelos **o1-preview** e **o1-mini** estão desativadas (comentadas).
+- **Configuração via variáveis de ambiente:**  
+  As chaves de API são carregadas automaticamente das variáveis de ambiente para maior segurança.
 
 ## Requisitos
 
-- **Python 3.6+**
+- **Python 3.8+**
 - **Dependências externas:**
   - `requests`
   - `rich`
+- **Sistema operacional compatível:**
+  - Linux ou WSL (para suporte ao `xterm`).
+- **Chaves de API:**
+  - `OPENAI_API_KEY`: chave válida para acesso à API da OpenAI.
+  - `DEEPSEEK_API_KEY`: chave válida para acesso à API da DeepSeek.
 
 Para instalar as dependências, execute:
 
-  ```bash
-  pip install -r requirements.txt
-  ```
-
-- **Chave de API:**  
-  É necessário possuir uma chave de API válida do OpenAI. O local da chave já está definido no código.
-
-- **Terminal compatível:**  
-  Utilize um terminal que suporte cores ANSI (a maioria dos terminais modernos em Linux, macOS e Windows).
+```bash
+pip install -r requirements.txt
+````
 
 ## Instalação
 
-1. **Clone o repositório**
-
-   ```bash
-   git clone https://github.com/DouglasRao/hackingGPT.git
-   ```
-
-2. **Acesse o diretório do projeto**
-
-   ```bash
-   cd hackingGPT
-   ```
-
-3. **(Opcional) Crie e ative um ambiente virtual**
-
-   ```bash
-   python -m venv venv
-   ```
-   
-   - No Linux/macOS:
-     ```bash
-     source venv/bin/activate
-     ```
-   - No Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-
-4. **Instale as dependências**
-
-   Execute o arquivo `requirements.txt`:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
+1. **Clone o repositório:**
+    
+    ```bash
+    git clone https://github.com/DouglasRao/HackingGPT.git
+    ```
+    
+2. **Acesse o diretório do projeto:**
+    
+    ```bash
+    cd HackingGPT
+    ```
+    
+3. **(Opcional) Crie e ative um ambiente virtual:**
+    
+    ```bash
+    python -m venv venv
+    ```
+    
+    - No Linux/macOS:
+        
+        ```bash
+        source venv/bin/activate
+        ```
+        
+    - No Windows:
+        
+        ```bash
+        venv\Scripts\activate
+        ```
+        
+4. **Instale as dependências:**
+    
+    ```bash
+    pip install -r requirements.txt
+    ```
+    
+5. **Configure as variáveis de ambiente:**
+    
+    - No Linux/macOS:
+        
+        ```bash
+        export OPENAI_API_KEY="sua-chave-openai"
+        export DEEPSEEK_API_KEY="sua-chave-deepseek"
+        ```
+        
+    - No Windows (PowerShell):
+        
+        ```bash
+        $env:OPENAI_API_KEY="sua-chave-openai"
+        $env:DEEPSEEK_API_KEY="sua-chave-deepseek"
+        ```
+        
 ## Uso
 
-1. **Execute o script**
+1. **Execute o script:**
+    
+    No diretório do projeto, inicie a ferramenta:
+    
+    ```bash
+    python hackingGPT.py
+    ```
+    
+2. **Siga as instruções na tela:**
+    
+    - **Seleção do modelo:**  
+        Escolha entre os modelos disponíveis (por exemplo, `gpt-4o`, `deepseek-chat`, etc.).
+        
+    - **Entrada de consulta:**  
+        Digite sua consulta de pentest ou bug bounty (por exemplo: "Quero realizar um pentest básico em example.com") ou digite `desconectar` para sair.
+        
+    - **Fluxo interativo:**
+        
+        - O script enviará sua consulta à API e exibirá a resposta.
+        - Se forem detectados comandos na resposta, você poderá:
+            1. Executar o comando (com a opção de editá-lo antes);
+            2. Pular o comando.
+3. **Execução interativa com `xterm`:**
+    
+    - Quando um comando for executado, uma janela do `xterm` será aberta, permitindo uma interação direta.
+    - A saída do comando será registrada e apresentada para análise posterior.
+4. **Itere ou saia:**
 
-   No diretório do projeto, execute:
-
-   ```bash
-   python hackingGPT.py
-   ```
-
-2. **Siga as instruções na tela**
-
-   - **Seleção do modelo:**  
-     Escolha entre as opções disponíveis (por exemplo, digite `1` para *gpt-4o* ou `2` para *gpt-4o-mini*).
-
-   - **Entrada de consulta:**  
-     Digite sua consulta de pentest ou bug bounty (por exemplo: "Quero fazer um pentest básico em bancocn.com") ou digite `desconectar` para sair.
-
-   - **Fluxo interativo:**  
-     O script enviará sua consulta para a API e exibirá a resposta. Se forem detectados comandos na resposta, um menu interativo permitirá:
-     
-     1. Fazer nova pergunta (voltando ao prompt principal);
-     2. Verificar/Executar os comandos apresentados na resposta;
-     3. Desconectar (sair do script).
-
-   - **Execução de comandos:**  
-     Ao escolher a opção para verificar/rodar comandos, você poderá decidir para cada comando se deseja:
-       - Executá-lo (com a opção de editá-lo antes);
-       - Ou pular o comando.
-     
-     Os resultados dos comandos serão exibidos e enviados para nova análise.
-
-3. **Itere ou saia**
-
-   Utilize o menu interativo para continuar fazendo novas perguntas ou processando comandos adicionais conforme necessário.
+    - Continue fazendo novas perguntas ou processando comandos adicionais conforme necessário.
 
 ## Contribuição
 
@@ -121,9 +137,8 @@ Contribuições são bem-vindas! Consulte o arquivo [CONTRIBUTING.md](CONTRIBUTI
 
 ## Licença
 
-Este projeto está licenciado sob a [Licença MIT](LICENSE).
+Este projeto está licenciado sob a [Licença MIT](LICENSE.txt).
 
 ---
 
 **Desenvolvido por Douglas Rodrigues Aguiar de Oliveira**
-

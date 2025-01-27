@@ -30,11 +30,12 @@ Todos os membros da comunidade também são incentivados a denunciar qualquer in
 
 ## Como denunciar
 
-Se você presenciar ou experienciar qualquer comportamento que viole este Código de Conduta, por favor, entre em contato imediatamente com [douglas_rodrigues@outlook.com](mailto:douglas_rodrigues@outlook.com). Todas as denúncias serão tratadas com confidencialidade e levadas a sério.
+Se você presenciar ou experienciar qualquer comportamento que viole este Código de Conduta, por favor, entre em contato imediatamente com [douglas.rao@protonmail.ch](mailto:douglas.rao@protonmail.ch). Todas as denúncias serão tratadas com confidencialidade e levadas a sério.
 
 ## Aplicação
 
 Os mantenedores do projeto são responsáveis por esclarecer e aplicar este Código de Conduta. Se houver violações deste Código, os mantenedores poderão tomar as medidas que julgarem necessárias, incluindo, mas não se limitando a:
+
 - Avisar o membro em questão.
 - Remover comentários ou conteúdo inadequado.
 - Bloquear ou banir membros que persistirem em comportamentos inaceitáveis.

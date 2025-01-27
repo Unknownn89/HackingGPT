@@ -8,19 +8,29 @@ from rich.markdown import Markdown
 import platform
 import subprocess
 import re
+import sys
 
 # =============================================================================
 #                                CONFIGURAÇÕES
 # =============================================================================
 
-# == SUA API KEY ==
-API_KEY = "insira-a-API-KEY-aqui"
+# Carrega as chaves das variáveis de ambiente
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
-ENDPOINT = "https://api.openai.com/v1/chat/completions"
+if not OPENAI_API_KEY:
+    print("ERRO: A variável de ambiente OPENAI_API_KEY não está definida.")
+    exit(1)
 
-# Escolha do modelo, definiremos depois:
-MODEL = ""
+if not DEEPSEEK_API_KEY:
+    print("ERRO: A variável de ambiente DEEPSEEK_API_KEY não está definida.")
+    exit(1)
 
+# Endpoints da OpenAI e DeepSeek
+OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions"
+DEEPSEEK_ENDPOINT = "https://api.deepseek.com/chat/completions"
+
+MODEL = ""           # Será escolhido pelo usuário
 loading_flag = True
 
 # =============================================================================
@@ -35,7 +45,6 @@ RED = '\033[0;31m'
 RESET = '\033[0m'
 BOLD = '\033[1m'
 
-# Rich Console para exibir Markdown
 console = Console()
 
 # =============================================================================
@@ -44,7 +53,7 @@ console = Console()
 
 def loading_animation():
     """
-    Mostra um 'spinner' de loading enquanto a requisição ao GPT é feita.
+    Mostra um 'spinner' de loading enquanto a requisição ao HackingGPT (ou DeepSeek) é feita.
     """
     global loading_flag
     spinstr = '|/-\\'
@@ -58,16 +67,16 @@ def loading_animation():
 
 def banner():
     """
-    Limpa a tela e mostra o banner inicial.
+    Limpa a tela e mostra o banner inicial do HackingGPT.
     """
     if platform.system() == "Windows":
-        os.system('cls')  # Para Windows
+        os.system('cls')
     else:
-        os.system('clear')  # Para Unix/Linux/macOS
+        os.system('clear')
 
     print(f"{NEON_BLUE}")
     print("╔════════════════════════════════════════════════════════╗")
-    print("║ ██╗  ██╗ █████╗  ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗  ║")
+    print("║ ██╗  ██║ █████╗  ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗  ║")
     print("║ ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██║████╗  ██║██╔════╝  ║")
     print("║ ███████║███████║██║     █████╔╝ ██║██╔██╗ ██║██║  ███╗ ║")
     print("║ ██╔══██║██╔══██║██║     ██╔═██╗ ██║██║╚██╗██║██║   ██║ ║")
@@ -92,21 +101,20 @@ def select_model():
     """
     global MODEL
     print(f"{NEON_YELLOW}▶ Escolha o modelo desejado:{RESET}")
-    print("1) gpt-4o")
-    print("2) gpt-4o-mini")
-    # Os modelos o1 (o1-preview e o1-mini) foram desativados temporariamente por não suportarem 'role: system'
-    # print("3) o1-preview")
-    # print("4) o1-mini")
-    choice = input("Seleção (1-2): ")
+    print("1) gpt-4o               (OpenAI)")
+    print("2) gpt-4o-mini          (OpenAI)")
+    print("3) deepseek-chat        (DeepSeek-V3)")
+    print("4) deepseek-reasoner    (DeepSeek-R1)")
+    choice = input("Seleção (1-4): ")
 
     if choice == "1":
         MODEL = "gpt-4o"
     elif choice == "2":
         MODEL = "gpt-4o-mini"
     elif choice == "3":
-        MODEL = "o1-preview"
+        MODEL = "deepseek-chat"
     elif choice == "4":
-        MODEL = "o1-mini"
+        MODEL = "deepseek-reasoner"
     else:
         print(f"{RED}[×] Seleção inválida. Usando modelo padrão: gpt-4o.{RESET}")
         MODEL = "gpt-4o"
@@ -127,7 +135,6 @@ def parse_commands(text):
     Identifica possíveis comandos de terminal no texto do HackingGPT.
     """
     commands_found = []
-
     # 1) Procurar code blocks do tipo ```bash ... ```
     pattern_code_block = r"```bash\s+(.+?)\s+```"
     matches_code = re.findall(pattern_code_block, text, re.DOTALL)
@@ -148,45 +155,39 @@ def parse_commands(text):
 
     return commands_found
 
-def execute_command(command):
+def get_assistant_response(conversation):
     """
-    Executa o comando localmente e retorna sua saída (stdout e stderr).
-    """
-    try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        saida = result.stdout.strip()
-        erros = result.stderr.strip()
-
-        saida_final = ""
-        if saida:
-            saida_final += f"\n[STDOUT]\n{saida}"
-        if erros:
-            saida_final += f"\n[STDERR]\n{erros}"
-        return saida_final if saida_final else "(Nenhuma saída)"
-    except Exception as e:
-        return f"Erro ao executar comando: {e}"
-
-def get_gpt_response(conversation):
-    """
-    Envia o 'conversation_history' para a API e retorna apenas o texto do HackingGPT.
+    Envia o 'conversation' para a API (OpenAI ou DeepSeek) e retorna
+    apenas o texto do HackingGPT (role=assistant).
     """
     global loading_flag
     loading_flag = True
 
-    # Thread para mostrar o spinner
     thread = threading.Thread(target=loading_animation, daemon=True)
     thread.start()
 
+    # Decide endpoint e chave conforme o modelo
+    if MODEL in ["gpt-4o", "gpt-4o-mini"]:
+        endpoint = OPENAI_ENDPOINT
+        api_key = OPENAI_API_KEY
+    elif MODEL in ["deepseek-chat", "deepseek-reasoner"]:
+        endpoint = DEEPSEEK_ENDPOINT
+        api_key = DEEPSEEK_API_KEY
+    else:
+        endpoint = OPENAI_ENDPOINT
+        api_key = OPENAI_API_KEY
+
     try:
         response = requests.post(
-            ENDPOINT,
+            endpoint,
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {API_KEY}"
+                "Authorization": f"Bearer {api_key}"
             },
             json={
                 "model": MODEL,
-                "messages": conversation
+                "messages": conversation,
+                "stream": False
             },
             timeout=60
         )
@@ -197,17 +198,56 @@ def get_gpt_response(conversation):
             result = response.json().get("choices", [])[0].get("message", {}).get("content", "")
             return result
         else:
-            print(f"{RED}[×] Erro na API: {response.status_code} - {response.text}{RESET}")
+            print(f"{RED}[×] Erro na API ({MODEL}): {response.status_code} - {response.text}{RESET}")
             return ""
     except requests.exceptions.RequestException as e:
         loading_flag = False
         thread.join()
-        print(f"{RED}[×] Erro: {e}{RESET}")
+        print(f"{RED}[×] Erro na chamada à API: {e}{RESET}")
         return ""
+
+# =============================================================================
+#           FUNÇÃO DE EXECUÇÃO DE COMANDOS ABRINDO UMA XTERM
+# =============================================================================
+def execute_command(command):
+    """
+    Abre um xterm para executar 'command' em modo (semi)interativo.
+    Redireciona a saída (stdout+stderr) para /tmp/hgpt_cmd.log via tee,
+    de modo a capturar todo o log final.
+
+    • O usuário verá a nova janela do xterm e poderá digitar dentro dela
+      se o programa for realmente interativo.
+    • Quando a xterm fechar, lemos /tmp/hgpt_cmd.log e retornamos para
+      anexar no histórico do HackingGPT.
+    • Necessita Linux/WSL com xterm instalado.
+    """
+    log_file = "/tmp/hgpt_cmd.log"
+    final_cmd = f"{command} 2>&1 | tee {log_file}"
+
+    print(f"{NEON_CYAN}Abrindo xterm para executar:{RESET} {command}\n")
+    try:
+        # '-hold' faz a janela não fechar imediatamente ao fim
+        subprocess.run(["xterm", "-hold", "-e", final_cmd])
+    except FileNotFoundError:
+        return "[×] ERRO: xterm não encontrado no sistema. Instale-o ou use outro emulador."
+
+    # Após fechar a xterm, lê o arquivo de log
+    if os.path.exists(log_file):
+        with open(log_file, "r", encoding="utf-8") as f:
+            output = f.read()
+        if output.strip():
+            return output
+        else:
+            return "(Nenhuma saída foi capturada.)"
+    else:
+        return "(Nenhum arquivo de log encontrado.)"
 
 def inspect_for_commands_and_optionally_execute(conversation_history, assistant_message):
     """
-    - Exibe a mensagem do HackingGPT
+    Exibe a mensagem do HackingGPT,
+    permite ao usuário fazer nova pergunta, verificar/Executar comandos ou sair.
+
+    Alteração: pergunta se deseja ENVIAR a saída ao HackingGPT ou não.
     """
     print(f"{NEON_GREEN}[✓] Resposta do HackingGPT:{RESET}")
     console.print(Markdown(assistant_message))
@@ -242,15 +282,22 @@ def inspect_for_commands_and_optionally_execute(conversation_history, assistant_
                         if edited_cmd:
                             cmd = edited_cmd
 
-                    print(f"{NEON_CYAN}Executando: {cmd}{RESET}")
                     output = execute_command(cmd)
+
                     print(f"{NEON_GREEN}--- Saída do comando ---{RESET}")
                     print(output)
                     print(f"{NEON_GREEN}------------------------{RESET}\n")
-                    all_cmd_outputs.append(f"Comando: {cmd}\nSaída:\n{output}")
+
+                    # Pergunta se deseja ENVIAR a saída ao GPT
+                    send_to_gpt = input(f"{NEON_YELLOW}Deseja enviar essa saída ao HackingGPT para análise? (s/n): {RESET}").lower().strip()
+                    if send_to_gpt == "s":
+                        all_cmd_outputs.append(f"Comando: {cmd}\nSaída:\n{output}")
+                    else:
+                        print(f"{NEON_CYAN}Saída não será enviada ao HackingGPT.{RESET}")
                 else:
                     all_cmd_outputs.append(f"Comando PULADO: {cmd}")
 
+            # Se ao menos um comando foi enviado ao GPT, geramos nova resposta
             if all_cmd_outputs:
                 final_text = "\n\n".join(all_cmd_outputs)
                 conversation_history.append({
@@ -259,7 +306,7 @@ def inspect_for_commands_and_optionally_execute(conversation_history, assistant_
                 })
 
                 print(f"{NEON_CYAN}Processando nova resposta do HackingGPT...{RESET}")
-                new_response = get_gpt_response(conversation_history)
+                new_response = get_assistant_response(conversation_history)
                 conversation_history.append({"role": "assistant", "content": new_response})
                 assistant_message = new_response
 
@@ -267,7 +314,7 @@ def inspect_for_commands_and_optionally_execute(conversation_history, assistant_
                 console.print(Markdown(new_response))
                 save_result(new_response)
             else:
-                print(f"{NEON_YELLOW}Nenhuma execução realizada.{RESET}")
+                print(f"{NEON_YELLOW}Nenhuma execução realizada ou nenhuma saída enviada ao GPT.{RESET}")
                 continue
 
         elif choice == "3":
@@ -284,7 +331,7 @@ def inspect_for_commands_and_optionally_execute(conversation_history, assistant_
 
 def main():
     banner()
-    print(f"{NEON_CYAN}[✓] Chave autenticada e criptografada!{RESET}")
+    print(f"{NEON_CYAN}[✓] Chave(s) autenticadas!{RESET}")
     select_model()
 
     print(f"{NEON_CYAN}Inicializando interface digital...{RESET}\n")
@@ -318,7 +365,7 @@ def main():
         conversation_history.append({"role": "user", "content": user_input})
 
         print(f"{NEON_CYAN}Processando resposta do HackingGPT...{RESET}")
-        assistant_response = get_gpt_response(conversation_history)
+        assistant_response = get_assistant_response(conversation_history)
 
         conversation_history.append({"role": "assistant", "content": assistant_response})
 
